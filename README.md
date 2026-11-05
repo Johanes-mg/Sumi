@@ -1,8 +1,9 @@
 <div align="center">
+# Vena
   <img src="logo.png" alt="Vena Logo" width="120">
 </div>
 
-# Vena
+
 
 ### Modern Calendar and Constat Management for Drivers
 
@@ -203,18 +204,6 @@ Vena is optimized for low-end and mid-range Android devices:
 - **Precomputed counters** for the monthly summary.
 
 The release APK is typically under 1 MB, providing fast startup and smooth scrolling on modest hardware.
-
-## Roadmap
-
-Potential areas for future improvements include:
-
-- [ ] Export monthly calendars to PDF.
-- [ ] Add notifications for upcoming work days.
-- [ ] Support multiple concurrent statuses per day.
-- [ ] Cloud synchronization.
-- [ ] Dark theme.
-- [ ] Statistics across multiple months.
-- [ ] Interface customization.
 
 ## Contributing
 
