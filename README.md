@@ -1,18 +1,20 @@
 <div align="center">
   <img src="logo.png" alt="Vena Logo" width="120">
+
+  <h1 align="center">Vena</h1>
+
+  <h3 align="center">Modern Calendar and Constat Management</h3>
+
+  <p><strong>An Android application designed to simplify activity tracking, organize personal calendars, and manage daily statuses efficiently.</strong></p>
+
+  <p>
+    <img src="https://img.shields.io/badge/Built%20with-Kotlin-purple?logo=kotlin" alt="Kotlin">
+    <img src="https://img.shields.io/badge/Interface-Jetpack%20Compose-green?logo=jetpackcompose" alt="Jetpack Compose">
+    <img src="https://img.shields.io/badge/Platform-Android-lightgrey?logo=android" alt="Android">
+    <img src="https://img.shields.io/badge/Min%20SDK-21-blue" alt="Min SDK 21">
+    <img src="https://img.shields.io/badge/Status-Release-brightgreen" alt="Release">
+  </p>
 </div>
-# Vena
-
-
-### Modern Calendar and Constat Management
-
-**An Android application designed to simplify activity tracking, organize personal calendars, and manage daily statuses efficiently.**
-
-![Kotlin](https://img.shields.io/badge/Built%20with-Kotlin-purple?logo=kotlin)
-![Jetpack Compose](https://img.shields.io/badge/Interface-Jetpack%20Compose-green?logo=jetpackcompose)
-![Platform](https://img.shields.io/badge/Platform-Android-lightgrey?logo=android)
-![Min SDK](https://img.shields.io/badge/Min%20SDK-21-blue)
-![Status](https://img.shields.io/badge/Project-Release-brightgreen)
 
 ---
 
