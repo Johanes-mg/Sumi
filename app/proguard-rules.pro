@@ -1,0 +1,1 @@
+-keep class com.venajojoh.mg.data.** { *; }
