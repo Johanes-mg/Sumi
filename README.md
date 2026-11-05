@@ -1,13 +1,12 @@
 <div align="center">
-# Vena
   <img src="logo.png" alt="Vena Logo" width="120">
 </div>
+# Vena
 
 
+### Modern Calendar and Constat Management
 
-### Modern Calendar and Constat Management for Drivers
-
-**An Android application designed to simplify driver activity tracking, organize personal calendars, and manage daily statuses efficiently.**
+**An Android application designed to simplify activity tracking, organize personal calendars, and manage daily statuses efficiently.**
 
 ![Kotlin](https://img.shields.io/badge/Built%20with-Kotlin-purple?logo=kotlin)
 ![Jetpack Compose](https://img.shields.io/badge/Interface-Jetpack%20Compose-green?logo=jetpackcompose)
@@ -17,24 +16,24 @@
 
 ---
 
-Designed with simplicity and clarity in mind, Vena helps drivers keep their personal calendar organized while providing a clear visual overview of daily work statuses.
+Designed with simplicity and clarity in mind, Vena helps users keep their personal calendar organized while providing a clear visual overview of daily work statuses.
 
 ## Overview
 
-**Vena** is an Android application developed in Kotlin with Jetpack Compose. It provides a centralized interface for managing drivers, tracking personal calendars, and visualizing work statuses day by day.
+**Vena** is an Android application developed in Kotlin with Jetpack Compose. It provides a centralized interface for managing people, tracking personal calendars, and visualizing work statuses day by day.
 
 The application combines a modern, responsive interface with local data persistence to deliver a practical daily tracking experience.
 
 ## Features
 
-### Driver Management
-- Register and manage drivers.
-- Rename or delete existing drivers.
-- Access each driver's personal calendar.
-- Keep driver records organized.
+### People Management
+- Register and manage people.
+- Rename or delete existing people.
+- Access each person's personal calendar.
+- Keep records organized.
 
 ### Personal Calendar
-- Monthly calendar view for each driver.
+- Monthly calendar view for each person.
 - Navigate between months.
 - Assign a status to each day.
 - View the current month at a glance.
@@ -124,10 +123,10 @@ The application focuses on:
 |---|---|
 | `MainActivity.kt` | Application entry point |
 | `DayState.kt` | Day status enum |
-| `Person.kt` | Driver data model |
+| `Person.kt` | Person data model |
 | `PersonRepository.kt` | Data persistence and caching |
 | `VenaApp.kt` | Main navigation and state management |
-| `PersonListScreen.kt` | Driver list interface |
+| `PersonListScreen.kt` | People list interface |
 | `PersonCalendarScreen.kt` | Personal calendar interface |
 | `Theme.kt` | Colors, typography and Material theme |
 
@@ -186,7 +185,7 @@ Vena follows a simple design philosophy:
 
 ## Data and Persistence
 
-Vena uses Android SharedPreferences for local data persistence. Driver information and their personal calendars are stored in a compact serialized format.
+Vena uses Android SharedPreferences for local data persistence. Person information and their personal calendars are stored in a compact serialized format.
 
 Data is written after each significant change. The application caches loaded data in memory to reduce disk reads.
 
@@ -233,7 +232,7 @@ Please contact the project owner for information about usage, modification, and 
 
 <div align="center">
 
-**Vena - Making Driver Management Simpler.**
+**Vena - Making Management Simpler.**
 
 *Built with Kotlin. Designed for Efficiency.*
 
