@@ -57,6 +57,51 @@ The application combines a modern, responsive interface with local data persiste
 - Black-bordered indicators for clear distinction of every state.
 - Responsive layout suitable for both small and large screens.
 
+---
+
+## Screenshoots
+
+### Logo
+
+<img src="captures/sumikotlin_1.jpg" width="320" alt="Llgo"/>
+
+### Main Menu
+
+<p>
+<img src="captures/sumikotlin_3.jpg" width="320" alt="menu-fr"/>
+<img src="captures/sumikotlin_4.jpg" width="320" alt="menu-en"/>
+</p>
+
+### Dark Main Menu
+
+<img src="captures/sumikotlin_5.jpg" width="320" alt="menu-dark"/>
+
+### Demo
+
+<p>
+<img src="captures/sumikotlin_6.jpg" width="320" alt="demo1"/>
+<img src="captures/sumikotlin_7.jpg" width="320" alt="demo2"/>
+<img src="captures/sumikotlin_8.jpg" width="320" alt="demo3"/>
+<img src="captures/sumikotlin_9.jpg" width="320" alt="demo4"/>
+</p>
+
+### QR Scan
+
+<p>
+<img src="captures/jbacckotlin_10.jpg" width="320" alt="qrscan1"/>
+<img src="captures/jbacckotlin_11.jpg" width="320" alt="qrscan2"/>
+</p>
+
+### Ouverture d'un document
+
+<img src="captures/jbacckotlin_8.jpg" width="320" alt="Visualisation d'un PDF"/>
+
+---
+
+
+---
+
+
 ## Interface
 
 Sumi is designed around a clean and structured mobile interface.
