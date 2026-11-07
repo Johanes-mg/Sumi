@@ -68,21 +68,22 @@ The application combines a modern, responsive interface with local data persiste
 ### Main Menu
 
 <p>
-<img src="captures/sumikotlin_3.jpg" width="320" alt="menu-fr"/>
-<img src="captures/sumikotlin_4.jpg" width="320" alt="menu-en"/>
+<img src="captures/sumikotlin_2.jpg" width="320" alt="menu-fr"/>
+<img src="captures/sumikotlin_3.jpg" width="320" alt="menu-en"/>
 </p>
 
 ### Dark Main Menu
 
-<img src="captures/sumikotlin_5.jpg" width="320" alt="menu-dark"/>
+<img src="captures/sumikotlin_4.jpg" width="320" alt="menu-dark"/>
 
 ### Demo
 
 <p>
-<img src="captures/sumikotlin_6.jpg" width="320" alt="demo1"/>
-<img src="captures/sumikotlin_7.jpg" width="320" alt="demo2"/>
-<img src="captures/sumikotlin_8.jpg" width="320" alt="demo3"/>
-<img src="captures/sumikotlin_9.jpg" width="320" alt="demo4"/>
+<img src="captures/sumikotlin_5.jpg" width="320" alt="demo1"/>
+<img src="captures/sumikotlin_6.jpg" width="320" alt="demo2"/>
+<img src="captures/sumikotlin_7.jpg" width="320" alt="demo3"/>
+<img src="captures/sumikotlin_8.jpg" width="320" alt="demo4"/>
+<img src="captures/sumikotlin_9.jpg" width="320" alt="demo45
 </p>
 
 ### QR Scan
