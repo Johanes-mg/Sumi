@@ -1,7 +1,7 @@
-package com.venajojoh.mg.data
+package com.sumijojoh.mg.data
 
 enum class DayState {
     REPOS,
     CONGE,
-    TRAVAIL
+    MISSION
 }

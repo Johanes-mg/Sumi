@@ -1,1 +1,1 @@
--keep class com.venajojoh.mg.data.** { *; }
+-keep class com.sumijojoh.mg.data.** { *; }

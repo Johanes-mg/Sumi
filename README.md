@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="logo.png" alt="Vena Logo" width="120">
+  <img src="logo.png" alt="Sumi Logo" width="120">
 
-  <h1 align="center">Vena</h1>
+  <h1 align="center">Sumi</h1>
 
   <h3 align="center">Modern Calendar and Constat Management</h3>
 
@@ -18,11 +18,11 @@
 
 ---
 
-Designed with simplicity and clarity in mind, Vena helps users keep their personal calendar organized while providing a clear visual overview of daily work statuses.
+Designed with simplicity and clarity in mind, Sumi helps users keep their personal calendar organized while providing a clear visual overview of daily work statuses.
 
 ## Overview
 
-**Vena** is an Android application developed in Kotlin with Jetpack Compose. It provides a centralized interface for managing people, tracking personal calendars, and visualizing work statuses day by day.
+**Sumi** is an Android application developed in Kotlin with Jetpack Compose. It provides a centralized interface for managing people, tracking personal calendars, and visualizing work statuses day by day.
 
 The application combines a modern, responsive interface with local data persistence to deliver a practical daily tracking experience.
 
@@ -42,8 +42,8 @@ The application combines a modern, responsive interface with local data persiste
 
 ### Day Statuses
 - **Libre** (white): free day, no particular status.
-- **En conge** (yellow): on leave.
-- **Au travail** (green): working day.
+- **En congé** (yellow): on leave.
+- **Mission** (green): working day.
 - Tap a day to cycle through the three statuses.
 
 ### Monthly Summary
@@ -59,7 +59,7 @@ The application combines a modern, responsive interface with local data persiste
 
 ## Interface
 
-Vena is designed around a clean and structured mobile interface.
+Sumi is designed around a clean and structured mobile interface.
 
 The application focuses on:
 - Clear navigation.
@@ -81,18 +81,18 @@ The application focuses on:
 
 ## Project Structure
 
-    Vena/
+    Sumi/
     |
     +-- app/
     |   +-- src/main/
-    |       +-- java/com/venajojoh/mg/
+    |       +-- java/com/sumijojoh/mg/
     |       |   +-- MainActivity.kt
     |       |   +-- data/
     |       |   |   +-- DayState.kt
     |       |   |   +-- Person.kt
     |       |   |   +-- PersonRepository.kt
     |       |   +-- ui/
-    |       |       +-- VenaApp.kt
+    |       |       +-- SumiApp.kt
     |       |       +-- screens/
     |       |       |   +-- PersonCalendarScreen.kt
     |       |       |   +-- PersonListScreen.kt
@@ -127,7 +127,7 @@ The application focuses on:
 | `DayState.kt` | Day status enum |
 | `Person.kt` | Person data model |
 | `PersonRepository.kt` | Data persistence and caching |
-| `VenaApp.kt` | Main navigation and state management |
+| `SumiApp.kt` | Main navigation and state management |
 | `PersonListScreen.kt` | People list interface |
 | `PersonCalendarScreen.kt` | Personal calendar interface |
 | `Theme.kt` | Colors, typography and Material theme |
@@ -145,8 +145,8 @@ Before working with the source code, make sure you have:
 
 ### Clone the Repository
 
-    git clone https://github.com/Johanes-mg/Vena.git
-    cd Vena
+    git clone https://github.com/Johanes-mg/Sumi.git
+    cd Sumi
 
 ### Build the Debug APK
 
@@ -158,7 +158,7 @@ Output: `app/build/outputs/apk/debug/app-debug.apk`
 
 The release build requires a signing configuration. Create a `signing.properties` file at the project root:
 
-    storeFile=vena-release.jks
+    storeFile=sumi-release.jks
     storePassword=<your_password>
     keyAlias=<your_alias>
     keyPassword=<your_password>
@@ -177,7 +177,7 @@ Or transfer the APK manually to the device and install it.
 
 ## Design Philosophy
 
-Vena follows a simple design philosophy:
+Sumi follows a simple design philosophy:
 
 - **Clarity:** Information should be easy to understand at a glance.
 - **Efficiency:** Common operations should remain accessible.
@@ -187,7 +187,7 @@ Vena follows a simple design philosophy:
 
 ## Data and Persistence
 
-Vena uses Android SharedPreferences for local data persistence. Person information and their personal calendars are stored in a compact serialized format.
+Sumi uses Android SharedPreferences for local data persistence. Person information and their personal calendars are stored in a compact serialized format.
 
 Data is written after each significant change. The application caches loaded data in memory to reduce disk reads.
 
@@ -195,7 +195,7 @@ Users should maintain regular backups if data is important to them.
 
 ## Performance
 
-Vena is optimized for low-end and mid-range Android devices:
+Sumi is optimized for low-end and mid-range Android devices:
 
 - **R8 full mode** for aggressive code shrinking and optimization.
 - **Resource shrinking** to remove unused resources.
@@ -234,7 +234,7 @@ Please contact the project owner for information about usage, modification, and 
 
 <div align="center">
 
-**Vena - Making Management Simpler.**
+**Sumi - Making Management Simpler.**
 
 *Built with Kotlin. Designed for Efficiency.*
 

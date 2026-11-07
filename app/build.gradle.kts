@@ -13,12 +13,12 @@ val signingProps = Properties().apply {
 }
 
 android {
-    namespace = "com.venajojoh.mg"
+    namespace = "com.sumijojoh.mg"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.venajojoh.mg"
-        minSdk = 21
+        applicationId = "com.sumijojoh.mg"
+        minSdk = 24
         targetSdk = 34
         versionCode = 3
         versionName = "1.1.2"
@@ -80,4 +80,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

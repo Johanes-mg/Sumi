@@ -1,17 +1,19 @@
-package com.venajojoh.mg
+package com.sumijojoh.mg
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.venajojoh.mg.data.PersonRepository
-import com.venajojoh.mg.ui.VenaApp
+import com.sumijojoh.mg.data.AppSettingsRepository
+import com.sumijojoh.mg.data.PersonRepository
+import com.sumijojoh.mg.ui.SumiApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val repository = PersonRepository(applicationContext)
+        val settingsRepository = AppSettingsRepository(applicationContext)
         setContent {
-            VenaApp(repository)
+            SumiApp(repository, settingsRepository)
         }
     }
 }
