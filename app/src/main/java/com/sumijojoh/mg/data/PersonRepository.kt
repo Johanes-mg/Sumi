@@ -57,14 +57,57 @@ class PersonRepository(context: Context) {
         sauvegarder(toutes)
     }
 
+    fun ajouterPersonne(p: Person): Person {
+        val avecId = p.copy(id = prochainId())
+        val toutes = ArrayList<Person>(charger().size + 1)
+        toutes.addAll(charger())
+        toutes.add(avecId)
+        sauvegarder(toutes)
+        return avecId
+    }
+
+    fun mettreAJourPersonne(p: Person) {
+        val actuelles = charger()
+        val index = actuelles.indexOfFirst { it.id == p.id }
+        if (index < 0) return
+        val toutes = ArrayList<Person>(actuelles.size)
+        toutes.addAll(actuelles)
+        toutes[index] = p
+        sauvegarder(toutes)
+    }
+
     fun supprimerScans() {
         val autres = charger().filterNot { it.source == PersonSource.SCAN }
         sauvegarder(autres)
     }
 
+    fun supprimerPersonne(id: Long) {
+        val autres = charger().filterNot { it.id == id }
+        sauvegarder(autres)
+    }
+
+    fun remplacerParSyncId(syncId: String, personne: Person) {
+        val actuelles = charger()
+        val index = actuelles.indexOfFirst { it.syncId == syncId }
+        val toutes = ArrayList<Person>(actuelles.size + 1)
+        if (index < 0) {
+            toutes.addAll(actuelles)
+            toutes.add(personne.copy(id = prochainId()))
+        } else {
+            for ((i, p) in actuelles.withIndex()) {
+                if (i == index) {
+                    toutes.add(personne.copy(id = p.id))
+                } else {
+                    toutes.add(p)
+                }
+            }
+        }
+        sauvegarder(toutes)
+    }
+
     private fun encoder(personnes: List<Person>): String {
         if (personnes.isEmpty()) return ""
-        val sb = StringBuilder(personnes.size * 32)
+        val sb = StringBuilder(personnes.size * 48)
         var premier = true
         for (p in personnes) {
             if (!premier) sb.append(SEP_RECORD)
@@ -85,6 +128,8 @@ class PersonRepository(context: Context) {
             }
             sb.append(SEP_FIELD).append(p.source.name)
             sb.append(SEP_FIELD).append(p.proprietaireDeviceId)
+            sb.append(SEP_FIELD).append(p.syncId ?: "")
+            sb.append(SEP_FIELD).append(p.updatedAt)
         }
         return sb.toString()
     }
@@ -106,12 +151,16 @@ class PersonRepository(context: Context) {
             val sep3 = ligne.indexOf(SEP_FIELD, sep2 + 1)
             val sep4 = if (sep3 < 0) -1 else ligne.indexOf(SEP_FIELD, sep3 + 1)
             val sep5 = if (sep4 < 0) -1 else ligne.indexOf(SEP_FIELD, sep4 + 1)
+            val sep6 = if (sep5 < 0) -1 else ligne.indexOf(SEP_FIELD, sep5 + 1)
+            val sep7 = if (sep6 < 0) -1 else ligne.indexOf(SEP_FIELD, sep6 + 1)
             val id = ligne.substring(0, sep1).toLongOrNull() ?: continue
             val nom = ligne.substring(sep1 + 1, sep2)
             val joursBruts = if (sep3 < 0) ligne.substring(sep2 + 1) else ligne.substring(sep2 + 1, sep3)
             val missionsBrutes = if (sep3 < 0) "" else if (sep4 < 0) ligne.substring(sep3 + 1) else ligne.substring(sep3 + 1, sep4)
             val sourceStr = if (sep4 < 0) "" else if (sep5 < 0) ligne.substring(sep4 + 1) else ligne.substring(sep4 + 1, sep5)
-            val propStr = if (sep5 < 0) "" else ligne.substring(sep5 + 1)
+            val propStr = if (sep5 < 0) "" else if (sep6 < 0) ligne.substring(sep5 + 1) else ligne.substring(sep5 + 1, sep6)
+            val syncStr = if (sep6 < 0) "" else if (sep7 < 0) ligne.substring(sep6 + 1) else ligne.substring(sep6 + 1, sep7)
+            val updatedStr = if (sep7 < 0) "0" else ligne.substring(sep7 + 1)
 
             val jours = if (joursBruts.isEmpty()) {
                 emptyMap()
@@ -163,13 +212,24 @@ class PersonRepository(context: Context) {
                 else -> PersonSource.LOCAL
             }
 
-            resultat.add(Person(id, nom, jours, missions, source, propStr))
+            resultat.add(
+                Person(
+                    id = id,
+                    nom = nom,
+                    jours = jours,
+                    missions = missions,
+                    source = source,
+                    proprietaireDeviceId = propStr,
+                    syncId = syncStr.ifEmpty { null },
+                    updatedAt = updatedStr.toLongOrNull() ?: 0L
+                )
+            )
         }
         return resultat
     }
 
     companion object {
-        private const val KEY_PERSONNES = "personnes_v4"
+        private const val KEY_PERSONNES = "personnes_v5"
         private const val SEP_RECORD = "\u0001"
         private const val SEP_FIELD = "\u0002"
         private const val SEP_ITEM = "\u0003"

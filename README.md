@@ -3,285 +3,184 @@
 
   <h1 align="center">Sumi</h1>
 
-  <h3 align="center">Modern Calendar and Constat Management</h3>
+  <h3 align="center">Lightweight calendar and daily status manager</h3>
 
-  <p><strong>An Android application designed to simplify activity tracking, organize personal calendars, and manage daily statuses efficiently.</strong></p>
+  <p><strong>A small Android application to track people, personal calendars and daily work statuses, focused on low-memory devices.</strong></p>
 
   <p>
+    <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT License">
     <img src="https://img.shields.io/badge/Built%20with-Kotlin-purple?logo=kotlin" alt="Kotlin">
     <img src="https://img.shields.io/badge/Interface-Jetpack%20Compose-green?logo=jetpackcompose" alt="Jetpack Compose">
     <img src="https://img.shields.io/badge/Platform-Android-lightgrey?logo=android" alt="Android">
-    <img src="https://img.shields.io/badge/Min%20SDK-21-blue" alt="Min SDK 21">
+    <img src="https://img.shields.io/badge/Min%20SDK-24-blue" alt="Min SDK 24">
     <img src="https://img.shields.io/badge/Status-Release-brightgreen" alt="Release">
   </p>
 </div>
 
 ---
 
-Designed with simplicity and clarity in mind, Sumi helps users keep their personal calendar organized while providing a clear visual overview of daily work statuses.
-
 ## Overview
 
-**Sumi** is an Android application developed in Kotlin with Jetpack Compose. It provides a centralized interface for managing people, tracking personal calendars, and visualizing work statuses day by day.
+Sumi is a small Android app written in Kotlin with Jetpack Compose. It helps you register people, maintain a monthly calendar for each of them, and mark daily work statuses (office, leave, mission). Data is stored locally; an optional QR-based synchronization lets two devices share the same calendar.
 
-The application combines a modern, responsive interface with local data persistence to deliver a practical daily tracking experience.
+Source code is available on GitHub:
+https://github.com/Johanes-mg/Sumi
+
+Release APKs are attached to GitHub Releases:
+https://github.com/Johanes-mg/Sumi/releases
 
 ## Features
 
-### People Management
-- Register and manage people.
-- Rename or delete existing people.
-- Access each person's personal calendar.
-- Keep records organized.
+### People
+- Register, rename and delete people.
+- Open a dedicated monthly calendar for each person.
+- Import other members in read-only mode through QR code or JSON file.
 
-### Personal Calendar
-- Monthly calendar view for each person.
-- Navigate between months.
-- Assign a status to each day.
-- View the current month at a glance.
+### Monthly calendar
+- Navigate month by month.
+- Tap a day to cycle through Office, Leave, Mission.
+- Create missions that fill every day between a start and an end date.
 
-### Day Statuses
-- **Libre** (white): free day, no particular status.
-- **En congé** (yellow): on leave.
-- **Mission** (green): working day.
-- Tap a day to cycle through the three statuses.
+### Monthly summary
+- Live counter of Office, Leave and Mission days for the visible month.
 
-### Monthly Summary
-- Real-time counters at the bottom of the calendar.
-- Displays the exact number of work days, leave days, and free days for the displayed month.
-- Updates instantly when a day's status changes.
+### Appearance
+- Light and dark themes.
+- French and English interface.
+- Borderless layout, black-outlined day indicators.
 
-### Visual Design
-- Clean, borderless topbar.
-- Custom color palette with high contrast.
-- Black-bordered indicators for clear distinction of every state.
-- Responsive layout suitable for both small and large screens.
+### Sharing
+- Export and import the whole set of local people as a JSON file.
+- QR code that carries an initial snapshot.
+- Optional real-time sync between two devices via a shared QR identifier.
 
----
+## Permissions
 
-## Screenshoots
+Sumi requests only the permissions required by its user-facing features.
 
-### Logo
+    CAMERA
+    Used exclusively by the QR-code scanner to import a shared calendar
+    or to resume an existing synchronization.
 
-<img src="captures/sumikotlin_1.jpg" width="320" alt="Llgo"/>
+    INTERNET
+    Used only when the user explicitly triggers the synchronization
+    feature (QR code shown or scanned). Not used at any other time.
 
-### Main Menu
+Sumi does not declare ACCESS_NETWORK_STATE, ACCESS_FINE_LOCATION, or any
+other permission. The camera hardware is declared optional so the app
+remains installable on devices without a camera.
 
-<p>
-<img src="captures/sumikotlin_2.jpg" width="320" alt="menu-fr"/>
-<img src="captures/sumikotlin_3.jpg" width="320" alt="menu-en"/>
-</p>
+## Network and privacy
 
-### Dark Main Menu
+The QR-based synchronization stores the shared calendar on jsonblob.com,
+a free third-party JSON storage service. The upload happens only after the
+user explicitly shows or scans a synchronization QR code, and continues
+for subsequent modifications until the user stops sharing. No analytics,
+no tracking, no advertising, no Google Play Services.
 
-<img src="captures/sumikotlin_4.jpg" width="320" alt="menu-dark"/>
+If you want a fully offline usage, simply never scan or display a
+synchronization QR code. The JSON export and import features work
+without any network access.
 
-### Demo
+## Technology stack
 
-<p>
-<img src="captures/sumikotlin_5.jpg" width="320" alt="demo1"/>
-<img src="captures/sumikotlin_6.jpg" width="320" alt="demo2"/>
-<img src="captures/sumikotlin_7.jpg" width="320" alt="demo3"/>
-<img src="captures/sumikotlin_8.jpg" width="320" alt="demo4"/>
-<img src="captures/sumikotlin_9.jpg" width="320" alt="demo45
-</p>
+- Kotlin
+- Jetpack Compose and Material 3
+- SharedPreferences for local persistence
+- R8 full mode, resource shrinking, baseline profiles
+- zxing-android-embedded for QR scanning and generation
 
-### QR Scan
+## Project structure
 
-<p>
-<img src="captures/jbacckotlin_10.jpg" width="320" alt="qrscan1"/>
-<img src="captures/jbacckotlin_11.jpg" width="320" alt="qrscan2"/>
-</p>
+- Sumi/
+    - app/
+        - src/main/
+            - java/com/sumijojoh/mg/
+                - MainActivity.kt
+                - data/
+                    - AppSettings.kt
+                    - AppSettingsRepository.kt
+                    - DayState.kt
+                    - JsonExporter.kt
+                    - MissionInfo.kt
+                    - Person.kt
+                    - PersonRepository.kt
+                    - QrSync.kt
+                    - SyncClient.kt
+                - ui/
+                    - SumiApp.kt
+                    - screens/
+                        - PersonCalendarScreen.kt
+                        - PersonListScreen.kt
+                        - SettingsScreen.kt
+                    - strings/Textes.kt
+                    - theme/Theme.kt
+            - res/
+                - mipmap-mdpi, mipmap-hdpi, mipmap-xhdpi, mipmap-xxhdpi, mipmap-xxxhdpi
+                - values/themes.xml
+            - AndroidManifest.xml
+        - build.gradle.kts
+        - proguard-rules.pro
+    - gradle/wrapper
+    - build.gradle.kts
+    - settings.gradle.kts
+    - gradle.properties
+    - gradlew, gradlew.bat
+    - logo.png
+    - LICENSE.md
+    - README.md
+    - .gitignore
 
-### Ouverture d'un document
+## Build from source
 
-<img src="captures/jbacckotlin_8.jpg" width="320" alt="Visualisation d'un PDF"/>
+Requirements:
+- OpenJDK 17
+- Android SDK with platform 34 and build-tools
+- Linux, macOS or Windows
 
----
-
-
----
-
-
-## Interface
-
-Sumi is designed around a clean and structured mobile interface.
-
-The application focuses on:
-- Clear navigation.
-- Consistent visual elements.
-- Readable information.
-- Organized management screens.
-- A customizable appearance.
-
-## Technology Stack
-
-| Technology | Purpose |
-|---|---|
-| **Kotlin** | Core application development |
-| **Jetpack Compose** | Declarative UI framework |
-| **Material 3** | Modern design system |
-| **SharedPreferences** | Local data persistence |
-| **R8 / ProGuard** | Code minification and optimization |
-| **Baseline Profiles** | Startup performance |
-
-## Project Structure
-
-    Sumi/
-    |
-    +-- app/
-    |   +-- src/main/
-    |       +-- java/com/sumijojoh/mg/
-    |       |   +-- MainActivity.kt
-    |       |   +-- data/
-    |       |   |   +-- DayState.kt
-    |       |   |   +-- Person.kt
-    |       |   |   +-- PersonRepository.kt
-    |       |   +-- ui/
-    |       |       +-- SumiApp.kt
-    |       |       +-- screens/
-    |       |       |   +-- PersonCalendarScreen.kt
-    |       |       |   +-- PersonListScreen.kt
-    |       |       +-- theme/
-    |       |           +-- Theme.kt
-    |       +-- res/
-    |       |   +-- mipmap-*/
-    |       |   +-- values/
-    |       |       +-- themes.xml
-    |       +-- AndroidManifest.xml
-    |   +-- build.gradle.kts
-    |   +-- proguard-rules.pro
-    |
-    +-- gradle/
-    |   +-- wrapper/
-    |
-    +-- build.gradle.kts
-    +-- settings.gradle.kts
-    +-- gradle.properties
-    +-- gradlew
-    +-- gradlew.bat
-    +-- logo.png
-    +-- .gitignore
-    +-- .gitattributes
-    +-- README.md
-
-### Source Code Organization
-
-| File | Responsibility |
-|---|---|
-| `MainActivity.kt` | Application entry point |
-| `DayState.kt` | Day status enum |
-| `Person.kt` | Person data model |
-| `PersonRepository.kt` | Data persistence and caching |
-| `SumiApp.kt` | Main navigation and state management |
-| `PersonListScreen.kt` | People list interface |
-| `PersonCalendarScreen.kt` | Personal calendar interface |
-| `Theme.kt` | Colors, typography and Material theme |
-
-## Getting Started
-
-### Prerequisites
-
-Before working with the source code, make sure you have:
-
-- [OpenJDK 17](https://adoptium.net/) installed
-- Android SDK (via `sdkmanager`)
-- A Linux or Windows development environment
-- A physical Android device or emulator
-
-### Clone the Repository
+Clone the repository:
 
     git clone https://github.com/Johanes-mg/Sumi.git
     cd Sumi
 
-### Build the Debug APK
+Build the debug APK:
 
     ./gradlew assembleDebug
 
-Output: `app/build/outputs/apk/debug/app-debug.apk`
+Output is written to app/build/outputs/apk/debug/app-debug.apk.
 
-### Build the Release APK
+Build a signed release APK. Create a signing.properties file at the project root:
 
-The release build requires a signing configuration. Create a `signing.properties` file at the project root:
-
-    storeFile=sumi-release.jks
-    storePassword=<your_password>
-    keyAlias=<your_alias>
-    keyPassword=<your_password>
+    storeFile=release.jks
+    storePassword=...
+    keyAlias=...
+    keyPassword=...
 
 Then run:
 
     ./gradlew assembleRelease
 
-Output: `app/build/outputs/apk/release/app-release.apk`
+Output is written to app/build/outputs/apk/release/app-release.apk.
 
-### Install on Device
+## Design principles
 
-    ./gradlew installDebug
-
-Or transfer the APK manually to the device and install it.
-
-## Design Philosophy
-
-Sumi follows a simple design philosophy:
-
-- **Clarity:** Information should be easy to understand at a glance.
-- **Efficiency:** Common operations should remain accessible.
-- **Consistency:** Interface elements should behave consistently.
-- **Memory efficiency:** Minimal allocations to reduce garbage collection.
-- **Maintainability:** The codebase is separated into dedicated modules.
-
-## Data and Persistence
-
-Sumi uses Android SharedPreferences for local data persistence. Person information and their personal calendars are stored in a compact serialized format.
-
-Data is written after each significant change. The application caches loaded data in memory to reduce disk reads.
-
-Users should maintain regular backups if data is important to them.
-
-## Performance
-
-Sumi is optimized for low-end and mid-range Android devices:
-
-- **R8 full mode** for aggressive code shrinking and optimization.
-- **Resource shrinking** to remove unused resources.
-- **Baseline Profiles** for faster startup.
-- **Compiled month keys** (`year * 12 + month`) to avoid `Calendar` allocations.
-- **SnapshotStateList** for efficient list updates without copying.
-- **Precomputed counters** for the monthly summary.
-
-The release APK is typically under 1 MB, providing fast startup and smooth scrolling on modest hardware.
-
-## Contributing
-
-Contributions, suggestions, and bug reports are welcome.
-
-If you would like to contribute:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Implement your changes.
-4. Test your modifications.
-5. Submit a pull request.
-
-Please keep the code organized and follow the existing project structure.
-
-## Auteur
-
-* **Johanes-mg**
+- Clarity: every screen must be understandable at a glance.
+- Efficiency: minimal allocations to reduce garbage collection.
+- Consistency: identical visual behaviour for identical actions.
+- Lightness: keep the release APK small and fast on entry-level devices.
 
 ## License
 
-A license has not yet been specified for this project.
+MIT License. See LICENSE.md for the full text.
 
-Please contact the project owner for information about usage, modification, and distribution permissions.
+Copyright (c) 2024-2025 Johanes-mg
+
+## Author
+
+- Johanes-mg
 
 ---
 
 <div align="center">
-
-**Sumi - Making Management Simpler.**
-
-*Built with Kotlin. Designed for Efficiency.*
-
+<strong>Sumi - Simple by design.</strong>
 </div>

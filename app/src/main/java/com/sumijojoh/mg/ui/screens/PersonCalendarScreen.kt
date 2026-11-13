@@ -96,7 +96,9 @@ fun PersonCalendarScreen(
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 12.dp)
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f)
             )
             if (lectureSeule) {
                 Spacer(Modifier.width(8.dp))

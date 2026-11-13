@@ -6,60 +6,112 @@ import android.util.Base64
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.UUID
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 object QrSync {
 
     private const val LIMITE_OCTETS = 2200
-    private const val SEPARATEUR_SYNC = "|"
 
     data class ContenuDecode(
-        val syncId: String?,
-        val personnes: List<Person>
+        val personne: Person?,
+        val syncId: String?
     )
 
-    fun encoderPourQR(personnes: List<Person>, syncId: String?): String? {
+    fun encoderPourQR(personne: Person): String? {
+        if (personne.syncId.isNullOrEmpty()) return null
         return runCatching {
-            val json = JsonExporter.exporter(personnes)
+            val obj = JSONObject()
+            obj.put("v", 2)
+            obj.put("syncId", personne.syncId)
+            obj.put("nom", personne.nom)
+            obj.put("updatedAt", personne.updatedAt)
+            val jours = StringBuilder(personne.jours.size * 18)
+            var premier = true
+            for ((clef, etat) in personne.jours) {
+                if (!premier) jours.append(';')
+                premier = false
+                jours.append(clef).append('=').append(etat.name)
+            }
+            obj.put("jours", jours.toString())
+            val missions = StringBuilder(personne.missions.size * 32)
+            var premiere = true
+            for (m in personne.missions) {
+                if (!premiere) missions.append(';')
+                premiere = false
+                missions.append(m.dateDebut).append('~').append(m.dateFin).append('~').append(m.motif)
+            }
+            obj.put("missions", missions.toString())
+
             val baos = ByteArrayOutputStream()
-            GZIPOutputStream(baos).use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            GZIPOutputStream(baos).use { it.write(obj.toString().toByteArray(Charsets.UTF_8)) }
             val compresse = baos.toByteArray()
             val b64 = Base64.encodeToString(compresse, Base64.NO_WRAP)
-            val sync = if (syncId.isNullOrEmpty()) UUID.randomUUID().toString() else syncId
-            val complet = "$sync$SEPARATEUR_SYNC$b64"
-            if (complet.length > LIMITE_OCTETS) return null
-            complet
+            val complet = "SUMI2:$b64"
+            if (complet.length > LIMITE_OCTETS) null else complet
         }.getOrNull()
     }
 
     fun decoderDepuisQR(contenu: String): ContenuDecode? {
         return runCatching {
             val propre = contenu.trim()
-            val syncId: String?
-            val partieDonnees: String
-            if (propre.contains(SEPARATEUR_SYNC)) {
-                val idx = propre.indexOf(SEPARATEUR_SYNC)
-                syncId = propre.substring(0, idx).ifEmpty { null }
-                partieDonnees = propre.substring(idx + 1)
-            } else {
-                syncId = null
-                partieDonnees = propre
-            }
-            val compresse = Base64.decode(partieDonnees, Base64.NO_WRAP)
+            if (!propre.startsWith("SUMI2:")) return null
+            val b64 = propre.substring(6)
+            val compresse = Base64.decode(b64, Base64.NO_WRAP)
             val json = GZIPInputStream(ByteArrayInputStream(compresse)).use {
                 it.readBytes().toString(Charsets.UTF_8)
             }
-            val personnes = JsonExporter.importer(json)
-            ContenuDecode(syncId, personnes)
+            val obj = JSONObject(json)
+            val syncId = obj.optString("syncId", "").ifEmpty { null }
+            val nom = obj.optString("nom", "").trim()
+            if (nom.isEmpty() || syncId == null) return null
+            val updatedAt = obj.optLong("updatedAt", 0L)
+            val joursBruts = obj.optString("jours", "")
+            val jours = HashMap<String, DayState>(8)
+            if (joursBruts.isNotEmpty()) {
+                for (bloc in joursBruts.split(';')) {
+                    val eq = bloc.indexOf('=')
+                    if (eq <= 0 || eq >= bloc.length - 1) continue
+                    val clef = bloc.substring(0, eq)
+                    if (clef.length != 10) continue
+                    val etat = when (bloc.substring(eq + 1)) {
+                        "REPOS" -> DayState.REPOS
+                        "CONGE" -> DayState.CONGE
+                        "MISSION" -> DayState.MISSION
+                        else -> continue
+                    }
+                    jours[clef] = etat
+                }
+            }
+            val missionsBrutes = obj.optString("missions", "")
+            val missions = ArrayList<MissionInfo>(4)
+            if (missionsBrutes.isNotEmpty()) {
+                for (bloc in missionsBrutes.split(';')) {
+                    val parts = bloc.split('~')
+                    if (parts.size == 3 && parts[0].length == 10 && parts[1].length == 10 && parts[2].isNotEmpty()) {
+                        missions.add(MissionInfo(parts[0], parts[1], parts[2]))
+                    }
+                }
+            }
+            val personne = Person(
+                id = 0L,
+                nom = nom,
+                jours = jours,
+                missions = missions,
+                source = PersonSource.LOCAL,
+                proprietaireDeviceId = "",
+                syncId = syncId,
+                updatedAt = updatedAt
+            )
+            ContenuDecode(personne, syncId)
         }.getOrNull()
     }
 
-    fun genererBitmap(personnes: List<Person>, syncId: String?, taille: Int): Bitmap? {
-        val contenu = encoderPourQR(personnes, syncId) ?: return null
+    fun genererBitmap(personne: Person, taille: Int): Bitmap? {
+        val contenu = encoderPourQR(personne) ?: return null
         val hints = mapOf(
             EncodeHintType.MARGIN to 0,
             EncodeHintType.CHARACTER_SET to "UTF-8"

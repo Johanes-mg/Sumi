@@ -2,6 +2,9 @@ package com.sumijojoh.mg.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,6 +13,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -26,6 +31,7 @@ import com.sumijojoh.mg.data.SyncClient
 import com.sumijojoh.mg.data.ThemeMode
 import com.sumijojoh.mg.ui.screens.PersonCalendarScreen
 import com.sumijojoh.mg.ui.screens.PersonListScreen
+import com.sumijojoh.mg.ui.screens.QrDialog
 import com.sumijojoh.mg.ui.screens.SettingsScreen
 import com.sumijojoh.mg.ui.strings.Textes
 import com.sumijojoh.mg.ui.theme.SumiTheme
@@ -43,74 +49,72 @@ fun SumiApp(
     var afficherParametres by remember { mutableStateOf(false) }
     val personnes = remember { mutableStateListOf<Person>().also { it.addAll(repository.charger()) } }
     var selectionId by remember { mutableStateOf<Long?>(null) }
+    var personneQrId by remember { mutableStateOf<Long?>(null) }
     val textes = remember(reglages.langue) { Textes(reglages.langue) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var syncEnCours by remember { mutableStateOf(false) }
-    var syncEnLigne by remember { mutableStateOf(true) }
 
     fun recharger() {
         personnes.clear()
         personnes.addAll(repository.charger())
     }
 
-    fun serialiserMesDonnees(): String {
-        val miennes = personnes.filter {
-            it.source == PersonSource.LOCAL || it.source == PersonSource.JSON
-        }.map { it.copy(proprietaireDeviceId = reglages.deviceId) }
-        return JsonExporter.exporter(miennes)
-    }
-
-    fun fusionnerMesDonneesAvecDistant(distantJson: String?): String {
-        val existantes = if (distantJson.isNullOrEmpty()) {
-            emptyList()
-        } else {
-            runCatching { JsonExporter.importer(distantJson) }.getOrDefault(emptyList())
-        }
-        val miennes = personnes.filter {
-            it.source == PersonSource.LOCAL || it.source == PersonSource.JSON
-        }.map { it.copy(proprietaireDeviceId = reglages.deviceId) }
-        val parProprietaire = LinkedHashMap<String, MutableList<Person>>()
-        for (p in existantes) {
-            if (p.proprietaireDeviceId == reglages.deviceId) continue
-            parProprietaire.getOrPut(p.proprietaireDeviceId) { mutableListOf() }.add(p)
-        }
-        parProprietaire[reglages.deviceId] = miennes.toMutableList()
-        val fusion = ArrayList<Person>()
-        for (liste in parProprietaire.values) fusion.addAll(liste)
-        return JsonExporter.exporter(fusion)
-    }
-
-    fun pousserMesDonnees() {
-        val syncId = reglages.syncId ?: return
+    fun creerBinPersonne(p: Person) {
+        if (p.syncId != null) return
+        val deviceId = reglages.deviceId
+        val avecProprio = p.copy(proprietaireDeviceId = deviceId, updatedAt = System.currentTimeMillis())
         scope.launch(Dispatchers.IO) {
-            syncEnCours = true
-            val distant = SyncClient.tirer(syncId)
-            val fusion = fusionnerMesDonneesAvecDistant(distant)
-            val ok = SyncClient.pousser(syncId, fusion)
-            withContext(Dispatchers.Main) {
-                syncEnLigne = ok
-                syncEnCours = false
+            val json = JsonExporter.exporterUne(avecProprio)
+            var binId: String? = null
+            for (i in 0 until 3) {
+                binId = SyncClient.creerBin(json)
+                if (binId != null) break
+                delay(2000L)
+            }
+            if (binId != null) {
+                withContext(Dispatchers.Main) {
+                    val miseAJour = avecProprio.copy(syncId = binId)
+                    repository.mettreAJourPersonne(miseAJour)
+                    recharger()
+                }
             }
         }
     }
 
-    fun appliquerScan(importees: List<Person>, syncIdDepuisQR: String?) {
-        val syncIdCible = syncIdDepuisQR ?: SyncClient.genererSyncId()
-        val importeesFiltrees = importees.filter { it.proprietaireDeviceId != reglages.deviceId }
-        repository.remplacerScans(importeesFiltrees)
-        recharger()
-        val maj = reglages.copy(syncId = syncIdCible)
-        reglages = maj
-        settingsRepository.sauvegarder(maj)
-        pousserMesDonnees()
+    fun pousserPersonne(p: Person) {
+        val binId = p.syncId ?: return
+        val deviceId = reglages.deviceId
+        val miseAJour = p.copy(proprietaireDeviceId = deviceId, updatedAt = System.currentTimeMillis())
+        scope.launch(Dispatchers.IO) {
+            val json = JsonExporter.exporterUne(miseAJour)
+            SyncClient.mettreAJourBin(binId, json)
+        }
     }
 
-    fun appliquerJson(importees: List<Person>) {
-        if (importees.isEmpty()) return
-        repository.ajouterJson(importees)
+    fun supprimerPersonneComplete(p: Person) {
+        val binId = p.syncId
+        scope.launch(Dispatchers.IO) {
+            if (binId != null) SyncClient.supprimerBin(binId)
+        }
+        repository.supprimerPersonne(p.id)
         recharger()
-        pousserMesDonnees()
+        if (selectionId == p.id) selectionId = null
+        if (personneQrId == p.id) personneQrId = null
+    }
+
+    fun appliquerScan(personneScannee: Person) {
+        val deviceId = reglages.deviceId
+        val reprise = personneScannee.copy(
+            proprietaireDeviceId = deviceId,
+            updatedAt = System.currentTimeMillis()
+        )
+        val existante = repository.charger().firstOrNull { it.syncId == personneScannee.syncId }
+        if (existante != null) {
+            repository.mettreAJourPersonne(reprise.copy(id = existante.id, source = PersonSource.SCAN))
+        } else {
+            repository.ajouterPersonne(reprise.copy(id = 0L, source = PersonSource.SCAN))
+        }
+        recharger()
     }
 
     val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
@@ -118,19 +122,37 @@ fun SumiApp(
         if (contenu != null) {
             val decode = QrSync.decoderDepuisQR(contenu)
             if (decode != null) {
-                appliquerScan(decode.personnes, decode.syncId)
+                val p = decode.personne
+                if (p != null) {
+                    appliquerScan(p)
+                }
             }
         }
+    }
+
+    fun lancerScan() {
+        scanLauncher.launch(
+            ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt(textes.scanQr)
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)
+        )
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
-            runCatching {
-                val json = serialiserMesDonnees()
-                context.contentResolver.openOutputStream(uri)?.use { out ->
-                    out.write(json.toByteArray(Charsets.UTF_8))
+            val snapshot = personnes.toList()
+            scope.launch(Dispatchers.IO) {
+                val json = JsonExporter.exporter(snapshot)
+                withContext(Dispatchers.Main) {
+                    runCatching {
+                        context.contentResolver.openOutputStream(uri)?.use { out ->
+                            out.write(json.toByteArray(Charsets.UTF_8))
+                        }
+                    }
                 }
             }
         }
@@ -140,48 +162,72 @@ fun SumiApp(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            runCatching {
-                val contenu = context.contentResolver.openInputStream(uri)?.use {
-                    it.readBytes().toString(Charsets.UTF_8)
-                } ?: return@runCatching
-                val importees = JsonExporter.importer(contenu)
-                appliquerJson(importees)
-            }
-        }
-    }
-
-    LaunchedEffect(reglages.syncId) {
-        val syncId = reglages.syncId ?: return@LaunchedEffect
-        while (true) {
-            val enLigne = withContext(Dispatchers.IO) { SyncClient.testerConnexion() }
-            if (!enLigne) {
-                withContext(Dispatchers.Main) { syncEnLigne = false }
-                delay(10000L)
-                continue
-            }
-            withContext(Dispatchers.Main) { syncEnLigne = true }
-
-            val contenu = withContext(Dispatchers.IO) { SyncClient.tirer(syncId) }
-            withContext(Dispatchers.Main) {
+            scope.launch(Dispatchers.IO) {
+                val contenu = runCatching {
+                    context.contentResolver.openInputStream(uri)?.use {
+                        it.readBytes().toString(Charsets.UTF_8)
+                    }
+                }.getOrNull()
                 if (!contenu.isNullOrEmpty()) {
-                    val tous = runCatching { JsonExporter.importer(contenu) }.getOrNull()
-                    if (tous != null) {
-                        val autres = tous.filter { it.proprietaireDeviceId != reglages.deviceId }
-                        val actuelles = repository.charger().filter { it.source == PersonSource.SCAN }
-                        val cleActuelle = actuelles.map { it.proprietaireDeviceId + "|" + it.nom + "|" + it.jours.size }.sorted()
-                        val cleNouvelle = autres.map { it.proprietaireDeviceId + "|" + it.nom + "|" + it.jours.size }.sorted()
-                        if (cleActuelle != cleNouvelle) {
-                            repository.supprimerScans()
-                            if (autres.isNotEmpty()) {
-                                repository.remplacerScans(autres)
+                    val importees = runCatching { JsonExporter.importer(contenu) }.getOrDefault(emptyList())
+                    if (importees.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            val deviceId = reglages.deviceId
+                            for (p in importees) {
+                                val nouvelle = p.copy(
+                                    id = 0L,
+                                    source = PersonSource.JSON,
+                                    proprietaireDeviceId = deviceId,
+                                    syncId = null,
+                                    updatedAt = System.currentTimeMillis()
+                                )
+                                val creee = repository.ajouterPersonne(nouvelle)
+                                creerBinPersonne(creee)
                             }
                             recharger()
                         }
                     }
                 }
             }
+        }
+    }
 
-            delay(5000L)
+    LaunchedEffect(Unit) {
+        val locales = repository.charger()
+        for (p in locales) {
+            if (p.syncId == null && p.source != PersonSource.SCAN) {
+                creerBinPersonne(p)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val snapshot = repository.charger()
+            for (p in snapshot) {
+                val binId = p.syncId
+                if (binId == null) continue
+                val lecture = withContext(Dispatchers.IO) { SyncClient.lireBin(binId) }
+                if (lecture == null) continue
+                val contenuLu = lecture.contenu
+                if (contenuLu == null || contenuLu.isEmpty()) continue
+                val distantes = runCatching { JsonExporter.importer(contenuLu) }.getOrNull() ?: continue
+                val distante = distantes.firstOrNull() ?: continue
+                if (distante.updatedAt > p.updatedAt) {
+                    val locale = personnes.firstOrNull { it.id == p.id } ?: continue
+                    val miseAJour = locale.copy(
+                        nom = distante.nom,
+                        jours = distante.jours,
+                        missions = distante.missions,
+                        updatedAt = distante.updatedAt
+                    )
+                    withContext(Dispatchers.Main) {
+                        repository.mettreAJourPersonne(miseAJour)
+                        recharger()
+                    }
+                }
+            }
+            delay(4000L)
         }
     }
 
@@ -204,10 +250,7 @@ fun SumiApp(
             afficherParametres -> {
                 SettingsScreen(
                     reglages = reglages,
-                    personnes = personnes,
                     textes = textes,
-                    syncEnCours = syncEnCours,
-                    syncEnLigne = syncEnLigne,
                     onRetour = { afficherParametres = false },
                     onChangerLangue = { changerLangue(it) },
                     onChangerTheme = { changerTheme(it) },
@@ -216,15 +259,6 @@ fun SumiApp(
                     },
                     onImporter = {
                         importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                    },
-                    onScanner = {
-                        scanLauncher.launch(
-                            ScanOptions()
-                                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                                .setPrompt(textes.scanQr)
-                                .setBeepEnabled(false)
-                                .setOrientationLocked(false)
-                        )
                     }
                 )
             }
@@ -240,9 +274,10 @@ fun SumiApp(
                             val nouveauxJours = HashMap<String, DayState>(p.jours.size + 1)
                             nouveauxJours.putAll(p.jours)
                             nouveauxJours[dateKey] = etat
-                            personnes[index] = p.copy(jours = nouveauxJours)
-                            repository.sauvegarder(personnes.toList())
-                            pousserMesDonnees()
+                            val maj = p.copy(jours = nouveauxJours)
+                            personnes[index] = maj
+                            repository.mettreAJourPersonne(maj)
+                            pousserPersonne(maj)
                         }
                     },
                     onAjouterMission = { mission ->
@@ -260,9 +295,10 @@ fun SumiApp(
                                 joursMaj[curseur] = DayState.MISSION
                                 curseur = jourSuivant(curseur)
                             }
-                            personnes[index] = p.copy(jours = joursMaj, missions = nouvellesMissions)
-                            repository.sauvegarder(personnes.toList())
-                            pousserMesDonnees()
+                            val maj = p.copy(jours = joursMaj, missions = nouvellesMissions)
+                            personnes[index] = maj
+                            repository.mettreAJourPersonne(maj)
+                            pousserPersonne(maj)
                         }
                     },
                     onSupprimerMission = { mission ->
@@ -284,9 +320,10 @@ fun SumiApp(
                                 }
                                 curseur = jourSuivant(curseur)
                             }
-                            personnes[index] = p.copy(jours = joursMaj, missions = missionsMaj)
-                            repository.sauvegarder(personnes.toList())
-                            pousserMesDonnees()
+                            val maj = p.copy(jours = joursMaj, missions = missionsMaj)
+                            personnes[index] = maj
+                            repository.mettreAJourPersonne(maj)
+                            pousserPersonne(maj)
                         }
                     }
                 )
@@ -295,39 +332,62 @@ fun SumiApp(
                 PersonListScreen(
                     personnes = personnes,
                     textes = textes,
+                    theme = reglages.theme,
                     onOuvrir = { selectionId = it.id },
                     onAjouter = { nom ->
-                        personnes.add(
-                            Person(
-                                repository.prochainId(),
-                                nom,
-                                emptyMap(),
-                                emptyList(),
-                                PersonSource.LOCAL,
-                                reglages.deviceId
-                            )
+                        val deviceId = reglages.deviceId
+                        val nouvelle = Person(
+                            id = 0L,
+                            nom = nom,
+                            jours = emptyMap(),
+                            missions = emptyList(),
+                            source = PersonSource.LOCAL,
+                            proprietaireDeviceId = deviceId,
+                            syncId = null,
+                            updatedAt = System.currentTimeMillis()
                         )
-                        repository.sauvegarder(personnes.toList())
-                        pousserMesDonnees()
+                        val creee = repository.ajouterPersonne(nouvelle)
+                        recharger()
+                        creerBinPersonne(creee)
                     },
                     onRenommer = { id, nouveauNom ->
                         val index = personnes.indexOfFirst { it.id == id }
                         if (index >= 0) {
-                            personnes[index] = personnes[index].copy(nom = nouveauNom)
-                            repository.sauvegarder(personnes.toList())
-                            pousserMesDonnees()
+                            val maj = personnes[index].copy(nom = nouveauNom)
+                            personnes[index] = maj
+                            repository.mettreAJourPersonne(maj)
+                            pousserPersonne(maj)
                         }
                     },
                     onSupprimer = { id ->
-                        val index = personnes.indexOfFirst { it.id == id }
-                        if (index >= 0) {
-                            personnes.removeAt(index)
-                            repository.sauvegarder(personnes.toList())
-                            pousserMesDonnees()
-                        }
-                        if (selectionId == id) selectionId = null
+                        val p = personnes.firstOrNull { it.id == id }
+                        if (p != null) supprimerPersonneComplete(p)
                     },
+                    onSupprimerScan = { id ->
+                        val p = personnes.firstOrNull { it.id == id }
+                        if (p != null) supprimerPersonneComplete(p)
+                    },
+                    onAfficherQr = { personneQrId = it.id },
+                    onScannerQr = { lancerScan() },
                     onOuvrirParametres = { afficherParametres = true }
+                )
+            }
+        }
+
+        val pQr = personneQrId?.let { id -> personnes.firstOrNull { it.id == id } }
+        if (pQr != null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.5f)) {
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+                QrDialog(
+                    personne = pQr,
+                    textes = textes,
+                    onFermer = { personneQrId = null },
+                    onRetry = { creerBinPersonne(pQr) }
                 )
             }
         }

@@ -1,6 +1,5 @@
 package com.sumijojoh.mg.ui.screens
 
-import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,44 +24,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sumijojoh.mg.R
 import com.sumijojoh.mg.data.AppSettings
 import com.sumijojoh.mg.data.Langue
-import com.sumijojoh.mg.data.Person
-import com.sumijojoh.mg.data.QrSync
 import com.sumijojoh.mg.data.ThemeMode
 import com.sumijojoh.mg.ui.strings.Textes
 
 @Composable
 fun SettingsScreen(
     reglages: AppSettings,
-    personnes: List<Person>,
     textes: Textes,
-    syncEnCours: Boolean,
-    syncEnLigne: Boolean,
     onRetour: () -> Unit,
     onChangerLangue: (Langue) -> Unit,
     onChangerTheme: (ThemeMode) -> Unit,
     onExporter: () -> Unit,
-    onImporter: () -> Unit,
-    onScanner: () -> Unit
+    onImporter: () -> Unit
 ) {
     BackHandler(enabled = true) { onRetour() }
 
-    val qrBitmap: Bitmap? = remember(personnes, reglages.syncId) {
-        if (personnes.isEmpty()) null
-        else QrSync.genererBitmap(personnes, reglages.syncId, 600)
-    }
+    val imageSettings = if (reglages.theme == ThemeMode.CLAIR) R.drawable.settings_dark else R.drawable.settings_light
 
     Column(
         modifier = Modifier
@@ -90,85 +77,23 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+            Image(
+                painter = painterResource(imageSettings),
+                contentDescription = textes.settings,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .size(26.dp)
+            )
+            Spacer(Modifier.width(8.dp))
             Text(
                 text = textes.settings,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 12.dp)
+                fontWeight = FontWeight.Bold
             )
         }
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = textes.syncTitle,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = textes.syncSubtitle,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            fontSize = 12.sp
-        )
-        Spacer(Modifier.height(10.dp))
-
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                when {
-                    personnes.isEmpty() -> Text(
-                        text = textes.syncNoData,
-                        color = Color(0xFF0F172A),
-                        fontSize = 13.sp
-                    )
-                    qrBitmap == null -> Text(
-                        text = textes.syncTooLarge,
-                        color = Color(0xFF0F172A),
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(20.dp)
-                    )
-                    else -> Image(
-                        bitmap = qrBitmap.asImageBitmap(),
-                        contentDescription = textes.syncTitle,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(12.dp)
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-        BoutonAction(
-            texte = textes.scanQr,
-            onClick = onScanner
-        )
-
-        if (reglages.syncId != null) {
-            Spacer(Modifier.height(6.dp))
-            val statut = when {
-                !syncEnLigne -> textes.realtimeOffline
-                syncEnCours -> textes.realtimeSyncing
-                else -> textes.realtimeOnline
-            }
-            Text(
-                text = statut,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 4.dp)
-            )
-        }
-
         Spacer(Modifier.height(24.dp))
+
         SectionTitle(textes.language)
         Row(
             modifier = Modifier.fillMaxWidth(),

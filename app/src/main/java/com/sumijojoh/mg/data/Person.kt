@@ -12,7 +12,9 @@ data class Person(
     val jours: Map<String, DayState>,
     val missions: List<MissionInfo>,
     val source: PersonSource = PersonSource.LOCAL,
-    val proprietaireDeviceId: String = ""
+    val proprietaireDeviceId: String = "",
+    val syncId: String? = null,
+    val updatedAt: Long = 0L
 ) {
     fun etatDuJour(dateKey: String): DayState = jours[dateKey] ?: DayState.REPOS
     fun lectureSeule(): Boolean = source == PersonSource.SCAN

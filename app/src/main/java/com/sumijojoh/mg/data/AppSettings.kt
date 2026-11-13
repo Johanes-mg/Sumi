@@ -13,6 +13,5 @@ enum class ThemeMode {
 data class AppSettings(
     val langue: Langue,
     val theme: ThemeMode,
-    val syncId: String? = null,
     val deviceId: String = ""
 )

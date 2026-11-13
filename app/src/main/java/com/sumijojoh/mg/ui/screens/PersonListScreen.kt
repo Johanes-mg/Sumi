@@ -47,6 +47,7 @@ import com.sumijojoh.mg.data.DayState
 import com.sumijojoh.mg.data.Langue
 import com.sumijojoh.mg.data.Person
 import com.sumijojoh.mg.data.PersonSource
+import com.sumijojoh.mg.data.ThemeMode
 import com.sumijojoh.mg.ui.strings.Textes
 import com.sumijojoh.mg.ui.theme.JauneConge
 import com.sumijojoh.mg.ui.theme.VertMission
@@ -58,19 +59,27 @@ import java.util.Locale
 fun PersonListScreen(
     personnes: List<Person>,
     textes: Textes,
+    theme: ThemeMode,
     onOuvrir: (Person) -> Unit,
     onAjouter: (String) -> Unit,
     onRenommer: (Long, String) -> Unit,
     onSupprimer: (Long) -> Unit,
+    onSupprimerScan: (Long) -> Unit,
+    onAfficherQr: (Person) -> Unit,
+    onScannerQr: () -> Unit,
     onOuvrirParametres: () -> Unit
 ) {
     val aujourdHui = remember {
         SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     }
+    val imageScan = if (theme == ThemeMode.CLAIR) R.drawable.scan_dark else R.drawable.scan_light
+    val imageQr = if (theme == ThemeMode.CLAIR) R.drawable.qr_dark else R.drawable.qr_light
+    val imageSettings = if (theme == ThemeMode.CLAIR) R.drawable.settings_dark else R.drawable.settings_light
 
     var dialogueAjout by remember { mutableStateOf(false) }
     var personneARenommer by remember { mutableStateOf<Person?>(null) }
     var personneASupprimer by remember { mutableStateOf<Person?>(null) }
+    var personneASupprimerScan by remember { mutableStateOf<Person?>(null) }
 
     val editables = personnes.filter { it.source != PersonSource.SCAN }
     val scannees = personnes.filter { it.source == PersonSource.SCAN }
@@ -96,9 +105,16 @@ fun PersonListScreen(
                     fontSize = 14.sp
                 )
             }
+            IconButton(onClick = onScannerQr) {
+                Image(
+                    painter = painterResource(imageScan),
+                    contentDescription = textes.scanQr,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
             IconButton(onClick = onOuvrirParametres) {
                 Image(
-                    painter = painterResource(R.drawable.settings),
+                    painter = painterResource(imageSettings),
                     contentDescription = textes.settings,
                     modifier = Modifier.size(26.dp)
                 )
@@ -142,9 +158,15 @@ fun PersonListScreen(
                         personne = personne,
                         etat = etat,
                         textes = textes,
+                        imageQr = imageQr,
                         lectureSeule = false,
                         onClick = { onOuvrir(personne) },
-                        onRenommer = { personneARenommer = personne },
+                        onQr = { onAfficherQr(personne) },
+                        onRenommer = if (personne.source == PersonSource.LOCAL || personne.source == PersonSource.JSON) {
+                            { personneARenommer = personne }
+                        } else {
+                            null
+                        },
                         onSupprimer = { personneASupprimer = personne }
                     )
                 }
@@ -166,10 +188,12 @@ fun PersonListScreen(
                             personne = personne,
                             etat = etat,
                             textes = textes,
+                            imageQr = imageQr,
                             lectureSeule = true,
                             onClick = { onOuvrir(personne) },
+                            onQr = { onAfficherQr(personne) },
                             onRenommer = null,
-                            onSupprimer = null
+                            onSupprimer = { personneASupprimerScan = personne }
                         )
                     }
                 }
@@ -223,6 +247,27 @@ fun PersonListScreen(
             }
         )
     }
+
+    personneASupprimerScan?.let { cible ->
+        AlertDialog(
+            onDismissRequest = { personneASupprimerScan = null },
+            title = { Text(textes.delete) },
+            text = { Text(textes.confirmDelete.format(cible.nom)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val id = cible.id
+                        personneASupprimerScan = null
+                        onSupprimerScan(id)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFC62828))
+                ) { Text(textes.delete) }
+            },
+            dismissButton = {
+                TextButton(onClick = { personneASupprimerScan = null }) { Text(textes.cancel) }
+            }
+        )
+    }
 }
 
 @Composable
@@ -230,8 +275,10 @@ private fun CartePersonne(
     personne: Person,
     etat: DayState,
     textes: Textes,
+    imageQr: Int,
     lectureSeule: Boolean,
     onClick: () -> Unit,
+    onQr: () -> Unit,
     onRenommer: (() -> Unit)?,
     onSupprimer: (() -> Unit)?
 ) {
@@ -299,40 +346,78 @@ private fun CartePersonne(
                         fontSize = 13.sp
                     )
                 }
-                if (onRenommer != null && onSupprimer != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .clickable { menuOuvert = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "...",
-                            color = couleurTexte.copy(alpha = 0.7f),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .clickable { onQr() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(imageQr),
+                        contentDescription = textes.shareQr,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .clickable { menuOuvert = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "...",
+                        color = couleurTexte.copy(alpha = 0.7f),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
-        if (menuOuvert && onRenommer != null && onSupprimer != null) {
+        if (menuOuvert) {
             AlertDialog(
                 onDismissRequest = { menuOuvert = false },
                 title = { Text(personne.nom) },
-                text = { Text("") },
-                confirmButton = {
-                    TextButton(
-                        onClick = { menuOuvert = false; onRenommer() },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFB8860B))
-                    ) { Text(textes.rename) }
+                text = {
+                    Column {
+                        if (onRenommer != null) {
+                            Text(
+                                text = textes.rename,
+                                color = Color(0xFFB8860B),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        menuOuvert = false
+                                        onRenommer()
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp)
+                            )
+                        }
+                        if (onSupprimer != null) {
+                            Text(
+                                text = textes.delete,
+                                color = Color(0xFFC62828),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        menuOuvert = false
+                                        onSupprimer()
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp)
+                            )
+                        }
+                    }
                 },
+                confirmButton = {},
                 dismissButton = {
-                    TextButton(
-                        onClick = { menuOuvert = false; onSupprimer() },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFC62828))
-                    ) { Text(textes.delete) }
+                    TextButton(onClick = { menuOuvert = false }) { Text(textes.cancel) }
                 }
             )
         }

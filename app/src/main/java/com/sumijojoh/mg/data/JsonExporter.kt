@@ -7,11 +7,14 @@ object JsonExporter {
 
     fun exporter(personnes: List<Person>): String {
         val racine = JSONObject()
-        racine.put("version", 1)
+        racine.put("version", 2)
         val liste = JSONArray()
         for (p in personnes) {
             val obj = JSONObject()
             obj.put("nom", p.nom)
+            obj.put("proprietaire", p.proprietaireDeviceId)
+            obj.put("updatedAt", p.updatedAt)
+            if (p.syncId != null) obj.put("syncId", p.syncId)
             val jours = JSONArray()
             for ((clef, etat) in p.jours) {
                 val j = JSONObject()
@@ -29,9 +32,39 @@ object JsonExporter {
                 missions.put(mo)
             }
             obj.put("missions", missions)
-            obj.put("proprietaire", p.proprietaireDeviceId)
             liste.put(obj)
         }
+        racine.put("personnes", liste)
+        return racine.toString()
+    }
+
+    fun exporterUne(p: Person): String {
+        val racine = JSONObject()
+        racine.put("version", 2)
+        val liste = JSONArray()
+        val obj = JSONObject()
+        obj.put("nom", p.nom)
+        obj.put("proprietaire", p.proprietaireDeviceId)
+        obj.put("updatedAt", p.updatedAt)
+        if (p.syncId != null) obj.put("syncId", p.syncId)
+        val jours = JSONArray()
+        for ((clef, etat) in p.jours) {
+            val j = JSONObject()
+            j.put("cle", clef)
+            j.put("etat", etat.name)
+            jours.put(j)
+        }
+        obj.put("jours", jours)
+        val missions = JSONArray()
+        for (m in p.missions) {
+            val mo = JSONObject()
+            mo.put("debut", m.dateDebut)
+            mo.put("fin", m.dateFin)
+            mo.put("motif", m.motif)
+            missions.put(mo)
+        }
+        obj.put("missions", missions)
+        liste.put(obj)
         racine.put("personnes", liste)
         return racine.toString()
     }
@@ -70,7 +103,11 @@ object JsonExporter {
                 }
             }
             val prop = obj.optString("proprietaire", "")
-            resultat.add(Person(0L, nom, jours, missions, PersonSource.LOCAL, prop))
+            val sync = obj.optString("syncId", "").ifEmpty { null }
+            val updated = obj.optLong("updatedAt", 0L)
+            resultat.add(
+                Person(0L, nom, jours, missions, PersonSource.LOCAL, prop, sync, updated)
+            )
         }
         return resultat
     }
